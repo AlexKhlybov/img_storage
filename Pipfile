@@ -4,6 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+sqlalchemy = "*"
+pg8000 = "*"
+jinja2 = "*"
+python-multipart = "*"
+psycopg2-binary = "==2.8.6"
 
 [dev-packages]
 
