@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import Session
 
 from .database import Base
-# from routers.img_storage_api import get_db
 
 
 class Inbox(Base):
@@ -17,21 +17,36 @@ class Inbox(Base):
     def __repr__(self):
         return f"<Inbox {self.name}>"
 
-    def get_all_img(self):
-        imgs = Inbox.query.all()
-        results = [
-            {'id': img.id, 'code': img.code, 'name': img.name, 'create_at': img.create_at} for img in imgs
-        ]
+    @staticmethod
+    def get_dict(obj):
+        return {
+            'id': obj.id,
+            'code': obj.code,
+            'name': obj.name,
+            'create_at': obj.create_at
+            }
+
+    @staticmethod
+    def get_img(db: Session, img_id: int):
+        img = db.query(Inbox).filter(Inbox.id == img_id).first()
+        if img:
+            return img
+        return None
+
+    @staticmethod
+    def get_all_img(db: Session):
+        imgs = db.query(Inbox).all()
+        results = [Inbox.get_dict(img) for img in imgs]
         return results
     
-    def create_img(self, data):
-        img = Inbox(code=data.code, name=data.name)
-        db = get_db()
+    @staticmethod
+    def create_img(db: Session, data):
+        img = Inbox(code=data['code'], name=data['filename'])
         db.add(img)
         db.commit()
 
-    def delete_img(self, id):
-        img = Inbox.query.get_or_404(id)
-        db = get_db()
+    @staticmethod
+    def delete_img(db: Session, img_id: int):
+        img = db.query(Inbox).get(img_id)
         db.delete(img)
         db.commit()

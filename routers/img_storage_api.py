@@ -1,15 +1,15 @@
+import os
+from datetime import datetime
+
+from typing import  List
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-import os
-print (os.getcwd())
-
 from models.database import SessionLocal
 from models.inbox import Inbox
 
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import File, UploadFile
 import uuid
 
 templates = Jinja2Templates(directory="templates")
@@ -25,51 +25,86 @@ def get_db():
         db.close()
 
 
-@app.get("/frame/")
-async def get_home(request: Request, db: Session = Depends(get_db)):
-    data = {'say': 'WFT'}
-    return templates.TemplateResponse("index.html", {"request": request, 'data': data})
+@app.get("/frame/", 
+        responses={
+            200: {
+                "description": "OK!",
+                "content": {
+                    "application/json": {
+                        "example": [
+                            {
+                                "id": 1,
+                                "code": "string",
+                                "...": "...",
+                            },
+                            {
+                                "id": 2,
+                                "code": "string",
+                                "...": "...",
+                            },
+                        ]
+                    }
+                },
+            },
+        },
+    )
+async def get_list_img(db: Session = Depends(get_db)):
+    img = Inbox.get_all_img(db=db)
+    return img
 
 
-@app.post("/frame/")
-async def create_upload_file(file: UploadFile = File(...)):
+@app.put("/frame/", 
+        responses={
+            201: {
+                "description": "OK!",
+                "content": {
+                    "application/json": {
+                        "example": [
+                            {
+                                "id": 8,
+                                "code": "string",
+                                "...": "...",
+                            },
+                            {
+                                "id": 7,
+                                "code": "string",
+                                "...": "...",
+                            },
+                        ]
+                    }
+                },
+            },
+        },
+    )
+async def upload_file(request: Request, up_file: List[UploadFile] = File(...),
+                             db: Session = Depends(get_db)):
     
-    file.filename = f"data/{uuid.uuid4()}.jpg"
-    contents = await file.read()
+    str_date = datetime.today().strftime('%Y%m%d')
+    if len(up_file) > 15:
+        raise HTTPException(status_code=400, detail="Не могу за раз больше 15!")
 
-    with open(file.filename, "wb") as f:
-        f.write(contents)
-    
+    if not os.path.exists(f'data/{str_date}'):
+        os.mkdir(f'data/{str_date}')
 
-
-    return {"filename": file.filename}
-
-@app.get("/frame/")
-async def get_home(request: Request, db: Session = Depends(get_db)):
-    data = {'say': 'WFT'}
-    return templates.TemplateResponse("index.html", {"request": request, 'data': data})
-
-
-# @app.put("/frame/{frame_id}", status_code=202, responses={**responses})
-# def town_update(town_id: int, data: TownModel, db: Session = Depends(get_db)):
-#     town = get_town(db=db, town_id=town_id)
-#     if town is None:
-#         raise HTTPException(status_code=404, detail="Town not found!")
-#     else:
-#         return update_town(db=db, town_id=town_id, data=data)
+    for file in up_file:
+        file.filename = f"{uuid.uuid4()}.jpg"
+        path = f"data/{str_date}/{file.filename}"
+        contents = await file.read()
+        with open(path, "wb") as f:
+            f.write(contents)
+        data = {
+            'code': request.url.path,
+            'filename': file.filename
+            }
+        Inbox.create_img(db=db, data=data)
+    return {'detail': 'Files uploaded successfully!'}
 
 
-# @app.delete("/frame/{frame_id}", responses={**responses}, status_code=202)
-# def town_delete(town_id: int, db: Session = Depends(get_db)):
-#     town = get_town(db=db, town_id=town_id)
-#     if town is None:
-#         raise HTTPException(status_code=404, detail="Town not found!")
-#     else:
-#         delete_town(db=db, town_id=town_id)
-
-
-# @app.post("/api/town/", status_code=201)
-# async def town_create(town: TownModel, db: Session = Depends(get_db)):
-#     town_el = create_town(db=db, data=town)
-#     town_aw = await get_weater(db=db, item=town_el)
-#     return town_aw.get_dict
+@app.delete("/frame/{img_id}", status_code=202)
+async def delete_img(img_id: int, db: Session = Depends(get_db)):
+        img = Inbox.get_img(db=db, img_id=img_id)
+        if img is None:
+            raise HTTPException(status_code=404, detail="Image not found!")
+        else:
+            Inbox.delete_img(db=db, img_id=img_id)
+            return {'detail': 'Files delete successfully!'}

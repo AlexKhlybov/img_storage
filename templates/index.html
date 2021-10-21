@@ -4,9 +4,19 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>{{ object.title }}</title>
 </head>
 <body>
-    <h1>Hello bro {{ data.say }}</h1>
+    <form method="POST" enctype="multipart/form-data" action="/frame/">
+        <input type="file" name="up_file" multiple="">
+        <input type="submit" value="Add">
+    </form>
+    <div>
+        
+        {% for el in object %}
+            <img src="{{ el.path }}" alt="">
+        {% endfor %}
+            
+    </div>
 </body>
 </html>
