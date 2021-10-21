@@ -25,6 +25,19 @@ def get_db():
         db.close()
 
 
+def delete_file(obj):
+    folder = ''.join((str(obj.create_at).split(' '))[0].split('-'))
+    cur_dir = os.path.join(os.getcwd(), f'data/{folder}/')
+
+    while True:
+        file_list = os.listdir(cur_dir)
+        if obj.name in file_list:    
+            os.remove(os.path.join(cur_dir, obj.name))
+            break
+    if not len(os.listdir(cur_dir)):
+        os.rmdir(cur_dir)
+
+
 @app.get("/frame/", 
         responses={
             200: {
@@ -107,4 +120,8 @@ async def delete_img(img_id: int, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Image not found!")
         else:
             Inbox.delete_img(db=db, img_id=img_id)
+            delete_file(img)
+            
             return {'detail': 'Files delete successfully!'}
+        
+        
