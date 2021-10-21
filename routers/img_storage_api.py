@@ -1,16 +1,15 @@
 import os
+import uuid
 from datetime import datetime
+from typing import List
 
-from typing import  List
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import (APIRouter, Depends, File, HTTPException, Request,
+                     UploadFile)
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from models.database import SessionLocal
 from models.inbox import Inbox
-
-from fastapi import File, UploadFile
-import uuid
 
 templates = Jinja2Templates(directory="templates")
 app = APIRouter()
@@ -27,7 +26,7 @@ def get_db():
 
 def delete_file(obj):
     folder = ''.join((str(obj.create_at).split(' '))[0].split('-'))
-    cur_dir = os.path.join(os.getcwd(), f'data/{folder}/')
+    cur_dir = os.path.join(os.getcwd(), f'upload_data/{folder}/')
 
     while True:
         file_list = os.listdir(cur_dir)
@@ -96,12 +95,12 @@ async def upload_file(request: Request, up_file: List[UploadFile] = File(...),
     if len(up_file) > 15:
         raise HTTPException(status_code=400, detail="Не могу за раз больше 15!")
 
-    if not os.path.exists(f'data/{str_date}'):
-        os.mkdir(f'data/{str_date}')
+    if not os.path.exists(f'upload_data/{str_date}'):
+        os.mkdir(f'upload_data/{str_date}')
 
     for file in up_file:
         file.filename = f"{uuid.uuid4()}.jpg"
-        path = f"data/{str_date}/{file.filename}"
+        path = f"upload_data/{str_date}/{file.filename}"
         contents = await file.read()
         with open(path, "wb") as f:
             f.write(contents)
@@ -121,7 +120,6 @@ async def delete_img(img_id: int, db: Session = Depends(get_db)):
         else:
             Inbox.delete_img(db=db, img_id=img_id)
             delete_file(img)
-            
             return {'detail': 'Files delete successfully!'}
         
         
