@@ -8,20 +8,11 @@ from fastapi import (APIRouter, Depends, File, HTTPException, Request,
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from models.database import SessionLocal
+from models.database import SessionLocal, get_db
 from models.inbox import Inbox
 
 templates = Jinja2Templates(directory="templates")
 app = APIRouter()
-
-
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def delete_file(obj):

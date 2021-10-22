@@ -11,6 +11,8 @@ pg8000 = "*"
 jinja2 = "*"
 python-multipart = "*"
 psycopg2-binary = "==2.8.6"
+pytest = "*"
+requests = "*"
 
 [dev-packages]
 

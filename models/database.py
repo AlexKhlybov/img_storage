@@ -10,12 +10,12 @@ load_dotenv()
 from config import BASEDIR, TESTING
 
 
-def create_sqlite_uri():
+def create_sqlite_url():
     return "sqlite:///" + join(BASEDIR, 'test_db.db3')
 
 
 if TESTING:
-    SQLALCHEMY_DATABASE_URL = create_sqlite_uri()
+    SQLALCHEMY_DATABASE_URL = create_sqlite_url()
     engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 else:
     DB_NAME = os.getenv("POSTGRES_DB")                  
@@ -29,3 +29,11 @@ else:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
